@@ -1,44 +1,37 @@
-import { useEffect } from 'react';
-import { Header } from './components/Header';
-import { MainContent } from './components/MainContent';
-import { Footer } from './components/Footer';
-import { usePageState } from './hooks/usePageState';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { LoginPage } from './pages/LoginPage';
+import { LandingPage } from './pages/LandingPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { useAuth } from './hooks/useAuth';
 
 export const App = () => {
-  const { state, toggleMenu, closeMenu, toggleTheme } = usePageState();
-
-  // Apply theme to document
-  useEffect(() => {
-    if (state.theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [state.theme]);
-
-  // Close menu on window resize
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 768 && state.isMenuOpen) {
-        closeMenu();
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [state.isMenuOpen, closeMenu]);
+  const { isAuthenticated } = useAuth();
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Header
-        isMenuOpen={state.isMenuOpen}
-        onToggleMenu={toggleMenu}
-        onCloseMenu={closeMenu}
-        theme={state.theme}
-        onToggleTheme={toggleTheme}
+    <Routes>
+      {/* Public routes */}
+      <Route 
+        path="/" 
+        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />} 
       />
-      <MainContent />
-      <Footer />
-    </div>
+      <Route path="/login" element={<LoginPage />} />
+      
+      {/* Protected routes */}
+      <Route 
+        path="/dashboard" 
+        element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        } 
+      />
+      
+      {/* Catch all route */}
+      <Route 
+        path="*" 
+        element={<Navigate to={isAuthenticated ? "/dashboard" : "/"} replace />} 
+      />
+    </Routes>
   );
 };
